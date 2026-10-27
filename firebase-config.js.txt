@@ -1,0 +1,65 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+// Sua configuração do Firebase oficial
+const firebaseConfig = {
+  apiKey: "AIzaSyDzgP1W194nNmACvaZpr1xMv3qCVMt2d2c",
+  authDomain: "smartcomanda-f5f73.firebaseapp.com",
+  databaseURL: "https://smartcomanda-f5f73-default-rtdb.firebaseio.com",
+  projectId: "smartcomanda-f5f73",
+  storageBucket: "smartcomanda-f5f73.firebasestorage.app",
+  messagingSenderId: "699841166319",
+  appId: "1:699841166319:web:fc3a806b2a7a19c2cc141a"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/**
+ * 1. MONITORAR MESA (Usado no Painel do Caixa)
+ * Fica ouvindo em tempo real tudo o que acontece na mesa (status, pedidos, conexão).
+ */
+export function monitorarMesa(mesaId, callback) {
+  const mesaRef = ref(db, `mesas/mesa_${mesaId}`);
+  onValue(mesaRef, (snapshot) => {
+    const dados = snapshot.val();
+    callback(dados);
+  }, (error) => {
+    console.error("Erro ao conectar no Realtime Database:", error);
+  });
+}
+
+/**
+ * 2. ATUALIZAR MESA PELO CAIXA (Mensagens ou status)
+ */
+export function atualizarMesaCaixa(mesaId, dados) {
+  const mesaRef = ref(db, `mesas/mesa_${mesaId}`);
+  update(mesaRef, dados);
+}
+
+/**
+ * 3. CLIENTE CONECTAR VIA QR CODE (Usado na página mobile do cliente)
+ */
+export function registrarConexaoCliente(mesaId) {
+  const mesaRef = ref(db, `mesas/mesa_${mesaId}`);
+  update(mesaRef, {
+    status: "Ocupada",
+    clienteOnline: true,
+    ultimaConexao: Date.now()
+  });
+}
+
+/**
+ * 4. CLIENTE ENVIAR NOVO PEDIDO (Usado na página mobile do cliente)
+ */
+export function enviarPedidoCliente(mesaId, nomeItem, preco) {
+  const pedidosRef = ref(db, `mesas/mesa_${mesaId}/pedidos`);
+  push(pedidosRef, {
+    item: nomeItem,
+    preco: preco,
+    status: "Pronto",
+    timestamp: Date.now()
+  });
+}
